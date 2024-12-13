@@ -37,6 +37,18 @@
 //
 // ========
 
+import { Point3d, Vector3d } from "./_geometry-3d";
+
+declare function glBeginEnd(name: string): void
+declare function glBegin(type: number, name: string, harlequin?: boolean): void;
+declare function glEnd(): void;
+declare function glUpdateBegin(name: string): void;
+declare function glUpdateEnd(): void;
+declare function glNormal3f(dx: number, dy: number, dz: number): void
+declare function glVertex3f(x: number, y: number, z: number): void
+declare var GL_LINES: number;
+declare var GL_TRIANGLES: number;
+
 // Simulation parameters.
 //
 let gTimeStep    = 1.0 / 200.0;
@@ -71,8 +83,15 @@ let gClothWidth  = 1.5;
 // A mass can be `fixed`, meaning its position does not change.
 //
 class Mass {
+    mass: number;
+    position0: Point3d;
+    velocity0: Vector3d;
+    fixed: boolean;
+    springs: Spring[];
+    position: Point3d;
+    velocity: Vector3d;
     
-    constructor(mass0, position0) {
+    constructor(mass0: number, position0: Point3d) {
         /*
          * Construct a particle with the given mass and starting position,
          * connected to no other masses with springs.
@@ -87,7 +106,7 @@ class Mass {
         this.springs     = [];     // What other masses is it connected to?
     }
         
-    addSpring(spring) {
+    addSpring(spring: Spring) {
         /*
          * Connect this mass to another with a spring.
          */
@@ -117,7 +136,7 @@ class Mass {
         // WRITE THIS!
     }
 
-    computeAcceleration() {
+    computeAcceleration(): Vector3d {
         /*
          * Compute the acceleration of this particle.
          * It results from the forces due to
@@ -137,7 +156,7 @@ class Mass {
         return force.times(1.0/this.mass);
     }
         
-    computeStep(timeStep, acceleration) {
+    computeStep(timeStep: number, acceleration: Vector3d) {
         /*
          * Compute the next position based on the current position,
          * the velocity, and the acceleration.
@@ -168,8 +187,12 @@ class Mass {
 // to its two ends according to Hooke's law.
 //
 class Spring {
+    mass1: Mass;
+    mass2: Mass;
+    stiffness: number
+    restingLength: number;
     
-    constructor(mass1, mass2, stiffness) {
+    constructor(mass1: Mass, mass2: Mass, stiffness: number) {
         this.mass1 = mass1;
         this.mass2 = mass2;
         mass1.addSpring(this);
@@ -187,7 +210,7 @@ class Spring {
         this.restingLength = this.mass2.position0.minus(this.mass1.position0).norm();
     }
     
-    computeForce(onMass) {
+    computeForce(onMass: Mass): Vector3d {
         /*
          * Compute the spring's force `onMass` based on its position,
          * and the position of the other mass.
@@ -216,8 +239,13 @@ class Spring {
 // 
 //
 class Cloth {
+    rows: number;
+    columns: number
+    masses: Mass[];
+    springs: Spring[];
+    doFlap: boolean;
     
-    constructor(rows,columns) {
+    constructor(rows: number, columns: number) {
         this.rows    = rows;
         this.columns = columns;
         this.masses  = [];
@@ -252,7 +280,7 @@ class Cloth {
         }
     }
     
-    getMass(r, c) {
+    getMass(r: number, c: number): Mass {
         /*
          * Get the particle at row `r`, column `c`.
          */
