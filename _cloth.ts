@@ -227,7 +227,24 @@ class Spring {
          * their distance apart is no more than `restingLength * gDeformation`.
          */
         
-        // WRITE THIS!
+        // Vector from mass1 to mass2
+        let vec = this.mass2.position.minus(this.mass1.position);
+        let dist = vec.norm();
+        let limitLength = gDeformation * this.restingLength;
+
+        if (dist > limitLength) {
+            if (this.mass1.fixed) {
+                this.mass2.position = this.mass1.position.plus(vec.unit().times(limitLength));
+            } else if (this.mass2.fixed) {
+                this.mass1.position = this.mass2.position.plus(vec.unit().times(-limitLength));
+            } else {
+                let excess = dist - limitLength;
+                let shiftDistance = excess / 2.0;
+
+                this.mass1.position = this.mass1.position.plus(vec.unit().times(shiftDistance));
+                this.mass2.position = this.mass2.position.plus(vec.unit().times(-shiftDistance));
+            }
+        }
     }
 }
 
