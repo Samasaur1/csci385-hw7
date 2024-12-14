@@ -216,9 +216,13 @@ class Spring {
          * and the position of the other mass.
          */
 
-        // WRITE THIS!
+        let k = this.stiffness;
+        let l = this.restingLength;
+        let vec = onMass == this.mass1 ? this.mass2.position.minus(this.mass1.position) : this.mass1.position.minus(this.mass2.position);
+        let u = vec.unit();
+        let dist = vec.norm();
 
-        return new Vector3d(0.0,0.0,0.0);
+        return u.times(dist - l).times(k);
     }
 
     constrain() {
