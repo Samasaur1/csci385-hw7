@@ -57,7 +57,7 @@ let gDeformation = 1.2;
 let gGravity     = 9.8;
 let gFriction    = 0.90;
 let gDrag        = 0.90;
-let gStiffness   = 5000.0;
+let gStiffness   = 3000.0;
 let gBend        = 0.333;
 let gWind        = 100.0;
 
