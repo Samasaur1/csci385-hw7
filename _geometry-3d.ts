@@ -134,6 +134,10 @@ class Point3d {
     }
 }
 
+interface Point3d {
+    withComponents(cs: [number, number, number]): Point3d;
+}
+
 Point3d.prototype.withComponents = function(cs) {
     /*
      * Construct a point from an array.
@@ -253,6 +257,11 @@ class Vector3d {
          */
         return this.times(1.0/scalar);
     }
+}
+
+interface Vector3d {
+    withComponents(cs: [number, number, number]): Vector3d;
+    randomUnit(): Vector3d;
 }
 
 Vector3d.prototype.withComponents = function(cs) {
