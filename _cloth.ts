@@ -90,6 +90,8 @@ class Mass {
     springs: Spring[];
     position: Point3d;
     velocity: Vector3d;
+    savedPosition: Point3d;
+    savedVelocity: Vector3d;
     
     constructor(mass0: number, position0: Point3d) {
         /*
@@ -124,7 +126,8 @@ class Mass {
         this.velocity    = this.velocity0;
         //
 
-        // WRITE THIS!
+        this.savedPosition = this.position0;
+        this.savedVelocity = this.velocity0;
     }
     
     saveState() {
@@ -133,7 +136,8 @@ class Mass {
          * velocity, before advancing it.
          */
         
-        // WRITE THIS!
+        this.savedPosition = this.position;
+        this.savedVelocity = this.velocity;
     }
 
     computeAcceleration(): Vector3d {
@@ -164,7 +168,8 @@ class Mass {
          * Use `timeStep` for the time step size.
          */
 
-        // WRITE THIS!
+        this.position = this.savedPosition.plus(this.savedVelocity.times(timeStep));
+        this.velocity = this.savedVelocity.plus(acceleration.times(timeStep));
     }
 
     makeStep() {
