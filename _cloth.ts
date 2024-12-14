@@ -504,9 +504,45 @@ class Cloth {
          *
          */
 
-        // WRITE THIS!
+        for (let r = 0; r < this.rows; ++r) {
+            for (let c = 0; c < this.columns; ++c) {
+                let mass = this.getMass(r, c);
+
+                // let hasTwoColumnsToRight = c < this.columns - 2;
+                // let hasOneColumnToRight = hasTwoColumnsToRight || c < this.columns - 1;
+                // let hasTwoRowsBelow = r < this.rows - 2;
+                // let hasOneRowBelow = hasTwoRowsBelow || r < this.rows - 2;
+
+                if (c < this.columns - 1) {
+                    let eastMass = this.getMass(r, c + 1);
+                    this.springs.push(new Spring(mass, eastMass, gStiffness));
+
+                    if (c < this.columns - 2) {
+                        let eastEastMass = this.getMass(r, c + 2);
+                        this.springs.push(new Spring(mass, eastEastMass, gStiffness/gBend));
+                    }
+
+                    if (r < this.rows - 1) {
+                        let southEastMass = this.getMass(r + 1, c + 1);
+                        this.springs.push(new Spring(mass, southEastMass, gStiffness));
+                    }
+
+                    if (r > 0) {
+                        let northEastMass = this.getMass(r - 1, c + 1);
+                        this.springs.push(new Spring(mass, northEastMass, gStiffness));
+                    }
+                }
+
+                if (r < this.rows - 1) {
+                    let southMass = this.getMass(r + 1, c);
+                    this.springs.push(new Spring(mass, southMass, gStiffness));
+
+                    if (r < this.rows - 2) {
+                        let southSouthMass = this.getMass(r + 2, c);
+                        this.springs.push(new Spring(mass, southSouthMass, gStiffness/gBend));
+                    }
+                }
+            }
+        }
     }
 }
-
-                
-
