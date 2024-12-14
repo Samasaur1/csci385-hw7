@@ -148,10 +148,14 @@ class Mass {
          *
          *    accel = (sum of the forces) / mass
          */
+        const ZERO_VECTOR = new Vector3d(0.0, 0.0, 0.0);
         
-        let force = new Vector3d(0.0,0.0,0.0);
+        let springs = this.springs.map(s => s.computeForce(this)).reduce((acc, el) => acc.plus(el));
+        let gravity = gGravityOn ? new Vector3d(0.0, -gGravity, 0.0).times(this.mass) : ZERO_VECTOR;
+        let breeze = gWindOn ? new Vector3d(0.0, 0.0, gWind) : ZERO_VECTOR;
+        let drag = this.velocity.times(gDrag);
 
-        // WRITE THIS!
+        let force = springs.plus(gravity).plus(breeze).minus(drag);
 
         return force.times(1.0/this.mass);
     }
