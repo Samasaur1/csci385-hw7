@@ -91,7 +91,7 @@ class Mass {
     position: Point3d;
     velocity: Vector3d;
     savedPosition: Point3d;
-    savedVelocity: Vector3d;
+    prevSavedPosition: Point3d;
     
     constructor(mass0: number, position0: Point3d) {
         /*
@@ -127,7 +127,7 @@ class Mass {
         //
 
         this.savedPosition = this.position0;
-        this.savedVelocity = this.velocity0;
+        this.prevSavedPosition = this.position0;
     }
     
     saveState() {
@@ -136,8 +136,8 @@ class Mass {
          * velocity, before advancing it.
          */
         
+        this.prevSavedPosition = this.savedPosition;
         this.savedPosition = this.position;
-        this.savedVelocity = this.velocity;
     }
 
     computeAcceleration(): Vector3d {
@@ -168,8 +168,8 @@ class Mass {
          * Use `timeStep` for the time step size.
          */
 
-        this.position = this.savedPosition.plus(this.savedVelocity.times(timeStep));
-        this.velocity = this.savedVelocity.plus(acceleration.times(timeStep));
+        let velocity = this.savedPosition.minus(this.prevSavedPosition);
+        this.position = this.savedPosition.plus(velocity.times(timeStep)).plus(acceleration.times(timeStep*timeStep));
     }
 
     makeStep() {
