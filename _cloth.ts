@@ -90,6 +90,8 @@ class Mass {
     springs: Spring[];
     position: Point3d;
     velocity: Vector3d;
+    savedPosition: Point3d;
+    prevSavedPosition: Point3d;
     
     constructor(mass0: number, position0: Point3d) {
         /*
@@ -124,7 +126,8 @@ class Mass {
         this.velocity    = this.velocity0;
         //
 
-        // WRITE THIS!
+        this.savedPosition = this.position0;
+        this.prevSavedPosition = this.position0;
     }
     
     saveState() {
@@ -133,7 +136,8 @@ class Mass {
          * velocity, before advancing it.
          */
         
-        // WRITE THIS!
+        this.prevSavedPosition = this.savedPosition;
+        this.savedPosition = this.position;
     }
 
     computeAcceleration(): Vector3d {
@@ -148,10 +152,14 @@ class Mass {
          *
          *    accel = (sum of the forces) / mass
          */
+        const ZERO_VECTOR = new Vector3d(0.0, 0.0, 0.0);
         
-        let force = new Vector3d(0.0,0.0,0.0);
+        let springs = this.springs.map(s => s.computeForce(this)).reduce((acc, el) => acc.plus(el));
+        let gravity = gGravityOn ? new Vector3d(0.0, -gGravity, 0.0).times(this.mass) : ZERO_VECTOR;
+        let breeze = gWindOn ? new Vector3d(0.0, 0.0, gWind) : ZERO_VECTOR;
+        let drag = this.velocity.times(gDrag);
 
-        // WRITE THIS!
+        let force = springs.plus(gravity).plus(breeze).minus(drag);
 
         return force.times(1.0/this.mass);
     }
@@ -164,7 +172,8 @@ class Mass {
          * Use `timeStep` for the time step size.
          */
 
-        // WRITE THIS!
+        let velocity = this.savedPosition.minus(this.prevSavedPosition);
+        this.position = this.savedPosition.plus(velocity.times(timeStep)).plus(acceleration.times(timeStep*timeStep));
     }
 
     makeStep() {
@@ -216,9 +225,13 @@ class Spring {
          * and the position of the other mass.
          */
 
-        // WRITE THIS!
+        let k = this.stiffness;
+        let l = this.restingLength;
+        let vec = onMass == this.mass1 ? this.mass2.position.minus(this.mass1.position) : this.mass1.position.minus(this.mass2.position);
+        let u = vec.unit();
+        let dist = vec.norm();
 
-        return new Vector3d(0.0,0.0,0.0);
+        return u.times(dist - l).times(k);
     }
 
     constrain() {
@@ -227,7 +240,24 @@ class Spring {
          * their distance apart is no more than `restingLength * gDeformation`.
          */
         
-        // WRITE THIS!
+        // Vector from mass1 to mass2
+        let vec = this.mass2.position.minus(this.mass1.position);
+        let dist = vec.norm();
+        let limitLength = gDeformation * this.restingLength;
+
+        if (dist > limitLength) {
+            if (this.mass1.fixed) {
+                this.mass2.position = this.mass1.position.plus(vec.unit().times(limitLength));
+            } else if (this.mass2.fixed) {
+                this.mass1.position = this.mass2.position.plus(vec.unit().times(-limitLength));
+            } else {
+                let excess = dist - limitLength;
+                let shiftDistance = excess / 2.0;
+
+                this.mass1.position = this.mass1.position.plus(vec.unit().times(shiftDistance));
+                this.mass2.position = this.mass2.position.plus(vec.unit().times(-shiftDistance));
+            }
+        }
     }
 }
 
@@ -302,7 +332,17 @@ class Cloth {
          * positions of some of its particles.
          */
 
-        // WRITE THIS!!
+        const offset = new Vector3d(0.0, -1.0, 0.0);
+        const row = this.rows - 1;
+        for (let c = 0; c < this.columns; c++) {
+            let mass = this.getMass(row, c);
+            mass.position = mass.position.plus(offset.plus(Vector3d.prototype.randomUnit()));
+        }
+
+        // for (let mass of this.masses) {
+        //     if (mass.fixed) { continue }
+        //     mass.position = mass.position.plus(Vector3d.prototype.randomUnit())
+        // }
     }
     
     update() {
@@ -504,9 +544,45 @@ class Cloth {
          *
          */
 
-        // WRITE THIS!
+        for (let r = 0; r < this.rows; ++r) {
+            for (let c = 0; c < this.columns; ++c) {
+                let mass = this.getMass(r, c);
+
+                // let hasTwoColumnsToRight = c < this.columns - 2;
+                // let hasOneColumnToRight = hasTwoColumnsToRight || c < this.columns - 1;
+                // let hasTwoRowsBelow = r < this.rows - 2;
+                // let hasOneRowBelow = hasTwoRowsBelow || r < this.rows - 2;
+
+                if (c < this.columns - 1) {
+                    let eastMass = this.getMass(r, c + 1);
+                    this.springs.push(new Spring(mass, eastMass, gStiffness));
+
+                    if (c < this.columns - 2) {
+                        let eastEastMass = this.getMass(r, c + 2);
+                        this.springs.push(new Spring(mass, eastEastMass, gStiffness/gBend));
+                    }
+
+                    if (r < this.rows - 1) {
+                        let southEastMass = this.getMass(r + 1, c + 1);
+                        this.springs.push(new Spring(mass, southEastMass, gStiffness));
+                    }
+
+                    if (r > 0) {
+                        let northEastMass = this.getMass(r - 1, c + 1);
+                        this.springs.push(new Spring(mass, northEastMass, gStiffness));
+                    }
+                }
+
+                if (r < this.rows - 1) {
+                    let southMass = this.getMass(r + 1, c);
+                    this.springs.push(new Spring(mass, southMass, gStiffness));
+
+                    if (r < this.rows - 2) {
+                        let southSouthMass = this.getMass(r + 2, c);
+                        this.springs.push(new Spring(mass, southSouthMass, gStiffness/gBend));
+                    }
+                }
+            }
+        }
     }
 }
-
-                
-
