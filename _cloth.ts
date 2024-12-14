@@ -302,7 +302,17 @@ class Cloth {
          * positions of some of its particles.
          */
 
-        // WRITE THIS!!
+        const offset = new Vector3d(0.0, -1.0, 0.0);
+        const row = this.rows - 1;
+        for (let c = 0; c < this.columns; c++) {
+            let mass = this.getMass(row, c);
+            mass.position = mass.position.plus(offset.plus(Vector3d.prototype.randomUnit()));
+        }
+
+        // for (let mass of this.masses) {
+        //     if (mass.fixed) { continue }
+        //     mass.position = mass.position.plus(Vector3d.prototype.randomUnit())
+        // }
     }
     
     update() {
